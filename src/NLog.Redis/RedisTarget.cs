@@ -12,13 +12,11 @@ namespace NLog.Targets
         /// <summary>
         /// Sets the host name or IP Address of the redis server
         /// </summary>
-        [RequiredParameter]
         public string Host { get; set; }
 
         /// <summary>
         /// Sets the port number redis is running on
         /// </summary>
-        [RequiredParameter]
         public int Port { get; set; }
 
         /// <summary>
@@ -45,15 +43,18 @@ namespace NLog.Targets
 
         private RedisConnectionManager _redisConnectionManager;
 
-        public RedisTarget()
+        public RedisTarget() { }
+
+        public RedisTarget(RedisConnectionManager redisConnectionManager)
         {
+            _redisConnectionManager = redisConnectionManager;
         }
 
         protected override void InitializeTarget()
         {
             base.InitializeTarget();
 
-            _redisConnectionManager = new RedisConnectionManager(Host, Port, Db, Password);
+            _redisConnectionManager = _redisConnectionManager ?? new RedisConnectionManager(Host, Port, Db, Password);
         }
         
         protected override void CloseTarget()

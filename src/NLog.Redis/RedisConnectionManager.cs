@@ -3,9 +3,9 @@ using StackExchange.Redis;
 
 namespace NLog.Targets
 {
-    internal class RedisConnectionManager : IDisposable
+    public class RedisConnectionManager : IDisposable
     {
-        private ConnectionMultiplexer _connectionMultiplexer;
+        private IConnectionMultiplexer _connectionMultiplexer;
 
         private readonly string _host;
         private readonly int _port;
@@ -22,24 +22,33 @@ namespace NLog.Targets
             InitializeConnection();
         }
 
+        public RedisConnectionManager(IConnectionMultiplexer connectionMultiplexer, int db)
+        {
+            _connectionMultiplexer = connectionMultiplexer;
+            _db = db;
+        }
+
         private void InitializeConnection()
         {
-            var connectionOptions = new ConfigurationOptions
+            if (_connectionMultiplexer == null || !_connectionMultiplexer.IsConnected)
+            {
+                var connectionOptions = new ConfigurationOptions
                 {
-                    AbortOnConnectFail =  false,
+                    AbortOnConnectFail = false,
                     SyncTimeout = 3000,
                     ConnectTimeout = 3000,
                     ConnectRetry = 3,
                     KeepAlive = 5
                 };
-            connectionOptions.EndPoints.Add(_host, _port);
+                connectionOptions.EndPoints.Add(_host, _port);
 
-            if (!string.IsNullOrEmpty(_password))
-            {
-                connectionOptions.Password = _password;
+                if (!string.IsNullOrEmpty(_password))
+                {
+                    connectionOptions.Password = _password;
+                }
+
+                _connectionMultiplexer = ConnectionMultiplexer.Connect(connectionOptions);
             }
-
-            _connectionMultiplexer = ConnectionMultiplexer.Connect(connectionOptions);
         }
 
         public IDatabase GetDatabase()
